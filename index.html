@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Chat e pedidos da Pizzaria Sabor da Casa">
+<title>Pizzaria Sabor da Casa</title>
+<style>
+:root{
+  --bg:#f5f5f5;--surface:#fff;--surface-2:#fafafa;--text:#202124;
+  --muted:#6b7280;--border:#e5e7eb;--accent:#d83a2e;--accent-dark:#b92e24;
+  --success:#218739;--shadow:0 8px 30px rgba(0,0,0,.08);--radius:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(216,58,46,.25);outline-offset:2px}
+.app{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 360px;max-width:1280px;margin:auto;background:var(--surface);box-shadow:var(--shadow)}
+.chat{min-width:0;display:flex;flex-direction:column;min-height:100vh;border-right:1px solid var(--border)}
+.header{height:72px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:#fff}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:#fff;font-size:22px}
+.brand h1{font-size:16px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0 0}
+.online{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--success)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--success)}
+.messages{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;background:linear-gradient(#fff,#fafafa)}
+.msg{max-width:min(78%,520px);padding:11px 13px;border-radius:16px;line-height:1.45;font-size:14px}
+.msg.store{align-self:flex-start;background:#f0f1f2;border-bottom-left-radius:5px}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}
+.time{display:block;font-size:10px;opacity:.65;margin-top:5px}
+.quick{display:flex;gap:8px;overflow:auto;padding:10px 18px;border-top:1px solid var(--border);background:#fff}
+.quick button{white-space:nowrap;border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;color:var(--text)}
+.quick button:hover{border-color:var(--accent);color:var(--accent)}
+.composer{display:flex;gap:9px;padding:12px 18px;background:#fff;border-top:1px solid var(--border)}
+.composer textarea{resize:none;flex:1;min-height:44px;max-height:110px;border:1px solid var(--border);border-radius:14px;padding:12px}
+.send,.primary{border:0;background:var(--accent);color:#fff;border-radius:13px;padding:0 17px;font-weight:700}
+.send:hover,.primary:hover{background:var(--accent-dark)}
+.sidebar{padding:18px;overflow:auto;background:var(--surface-2)}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px}
+.section-title h2{font-size:17px;margin:0}.count{font-size:11px;color:var(--muted)}
+.categories{display:flex;gap:7px;overflow:auto;margin-bottom:14px}
+.category{border:1px solid var(--border);background:#fff;border-radius:999px;padding:7px 11px;white-space:nowrap}
+.category.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.products{display:grid;gap:10px}
+.product{background:#fff;border:1px solid var(--border);border-radius:15px;padding:13px}
+.product-top{display:flex;justify-content:space-between;gap:10px}.product h3{margin:0;font-size:14px}.price{font-weight:800;color:var(--accent);white-space:nowrap}
+.product p{margin:5px 0 10px;color:var(--muted);font-size:12px;line-height:1.4}
+.add{width:100%;border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:10px;padding:8px;font-weight:700}
+.add:hover{background:var(--accent);color:#fff}
+.cart{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.cart-empty{font-size:13px;color:var(--muted);background:#fff;border:1px dashed var(--border);padding:14px;border-radius:13px}
+.cart-item{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px;margin-bottom:8px}
+.cart-row{display:flex;justify-content:space-between;gap:10px;font-size:13px}.cart-name{font-weight:700}
+.controls{display:flex;align-items:center;gap:7px;margin-top:8px}.qty{border:1px solid var(--border);background:#fff;width:28px;height:28px;border-radius:8px}.remove{margin-left:auto;border:0;background:none;color:var(--muted);font-size:11px}
+.totals{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}.total-row{display:flex;justify-content:space-between;margin:5px 0;font-size:13px}.total-row.final{font-size:17px;font-weight:800;margin-top:9px}
+.primary{width:100%;height:44px;margin-top:12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;place-items:center;padding:18px;z-index:10}
+.modal.open{display:grid}.modal-card{width:min(500px,100%);background:#fff;border-radius:20px;padding:20px;box-shadow:var(--shadow)}
+.modal-card h2{margin:0 0 5px}.modal-card>p{color:var(--muted);font-size:13px;margin-top:0}
+.form{display:grid;gap:11px;margin-top:15px}.form label{font-size:12px;font-weight:700}.form input,.form select{width:100%;border:1px solid var(--border);border-radius:11px;padding:11px;background:#fff}.modal-actions{display:flex;gap:9px;margin-top:15px}.secondary{flex:1;border:1px solid var(--border);background:#fff;border-radius:11px;padding:11px}.modal-actions .primary{flex:1;margin:0}
+.status-card{margin-top:15px;background:#f7f7f7;border-radius:13px;padding:12px;font-size:13px}
+@media(max-width:850px){
+  .app{grid-template-columns:1fr;box-shadow:none}.sidebar{border-top:1px solid var(--border)}.chat{min-height:70vh;border-right:0}
+}
+@media(max-width:520px){
+  .header{height:64px}.messages{padding:14px}.msg{max-width:88%}.quick,.composer,.sidebar{padding-left:12px;padding-right:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="chat" aria-label="Atendimento da pizzaria">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🍕</div>
+        <div><h1 id="storeName">Pizzaria Sabor da Casa</h1><p>Atendimento e pedidos</p></div>
+      </div>
+      <div class="online"><span class="dot"></span>Online</div>
+    </header>
+
+    <section id="messages" class="messages" aria-live="polite" aria-label="Conversa"></section>
+
+    <div class="quick" aria-label="Respostas rápidas">
+      <button type="button" data-quick="cardapio">Ver cardápio</button>
+      <button type="button" data-quick="pedido">Fazer pedido</button>
+      <button type="button" data-quick="promocoes">Promoções</button>
+      <button type="button" data-quick="entrega">Taxa de entrega</button>
+      <button type="button" data-quick="atendente">Falar com atendente</button>
+    </div>
+
+    <form id="chatForm" class="composer">
+      <textarea id="messageInput" rows="1" placeholder="Digite sua mensagem..." aria-label="Mensagem"></textarea>
+      <button class="send" type="submit" aria-label="Enviar mensagem">Enviar</button>
+    </form>
+  </main>
+
+  <aside class="sidebar" aria-label="Cardápio e carrinho">
+    <div class="section-title"><h2>Cardápio</h2><span class="count" id="itemCount">0 itens</span></div>
+    <div id="categories" class="categories"></div>
+    <div id="products" class="products"></div>
+
+    <section class="cart">
+      <div class="section-title"><h2>Seu pedido</h2><span class="count" id="cartCount">0</span></div>
+      <div id="cartItems"></div>
+      <div id="totals"></div>
+    </section>
+  </aside>
+</div>
+
+<div id="checkoutModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+  <div class="modal-card">
+    <h2 id="checkoutTitle">Finalizar pedido</h2>
+    <p>Confira os dados para simular a confirmação do pedido.</p>
+    <form id="checkoutForm" class="form">
+      <div><label for="customerName">Nome</label><input id="customerName" required autocomplete="name" placeholder="Seu nome"></div>
+      <div><label for="deliveryType">Entrega ou retirada</label>
+        <select id="deliveryType"><option value="entrega">Entrega</option><option value="retirada">Retirada no balcão</option></select>
+      </div>
+      <div id="addressField"><label for="address">Endereço</label><input id="address" autocomplete="street-address" placeholder="Rua, número e bairro"></div>
+      <div><label for="payment">Pagamento</label>
+        <select id="payment"><option>Pix</option><option>Cartão</option><option>Dinheiro</option></select>
+      </div>
+      <div id="checkoutSummary" class="status-card"></div>
+      <div class="modal-actions"><button type="button" class="secondary" id="cancelCheckout">Cancelar</button><button class="primary" type="submit">Confirmar pedido</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // Dados editáveis da pizzaria.
+  const pizzaria = {
+    nome: "Pizzaria Sabor da Casa",
+    status: "Online",
+    horario: "18:00 às 23:30",
+    taxaEntrega: 6.90
+  };
+
+  const produtos = [
+    {id:1,nome:"Calabresa",descricao:"Molho, muçarela, calabresa e cebola.",categoria:"Pizzas",preco:39.90},
+    {id:2,nome:"Margherita",descricao:"Molho, muçarela, tomate, manjericão e parmesão.",categoria:"Pizzas",preco:42.90},
+    {id:3,nome:"Frango com Catupiry",descricao:"Frango temperado, muçarela e creme de queijo.",categoria:"Pizzas",preco:44.90},
+    {id:4,nome:"Quatro Queijos",descricao:"Muçarela, provolone, parmesão e gorgonzola.",categoria:"Pizzas",preco:46.90},
+    {id:5,nome:"Portuguesa",descricao:"Presunto, ovo, cebola, ervilha, muçarela e azeitona.",categoria:"Pizzas",preco:45.90},
+    {id:6,nome:"Coca-Cola 2L",descricao:"Refrigerante gelado.",categoria:"Bebidas",preco:12.00},
+    {id:7,nome:"Guaraná 2L",descricao:"Refrigerante gelado.",categoria:"Bebidas",preco:10.00},
+    {id:8,nome:"Brownie",descricao:"Sobremesa de chocolate.",categoria:"Sobremesas",preco:12.90}
+  ];
+
+  const state = {
+    categoria: "Todos",
+    carrinho: JSON.parse(localStorage.getItem("pizzaria-carrinho") || "[]"),
+    mensagens: JSON.parse(localStorage.getItem("pizzaria-mensagens") || "[]")
+  };
+
+  const $ = (selector) => document.querySelector(selector);
+  const money = (value) => value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const time = () => new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+
+  function save() {
+    localStorage.setItem("pizzaria-carrinho", JSON.stringify(state.carrinho));
+    localStorage.setItem("pizzaria-mensagens", JSON.stringify(state.mensagens));
+  }
+
+  function addMessage(text, type="store") {
+    state.mensagens.push({text,type,time:time()});
+    save();
+    renderMessages();
+  }
+
+  function renderMessages() {
+    const el = $("#messages");
+    el.innerHTML = "";
+    state.mensagens.forEach(message => {
+      const div = document.createElement("div");
+      div.className = `msg ${message.type}`;
+      div.textContent = message.text;
+      const small = document.createElement("span");
+      small.className = "time";
+      small.textContent = message.time;
+      div.appendChild(small);
+      el.appendChild(div);
+    });
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function renderCategories() {
+    const categories = ["Todos", ...new Set(produtos.map(p => p.categoria))];
+    $("#categories").innerHTML = categories.map(category =>
+      `<button type="button" class="category ${state.categoria === category ? "active" : ""}" data-category="${category}">${category}</button>`
+    ).join("");
+  }
+
+  function renderProducts() {
+    const filtered = state.categoria === "Todos"
+      ? produtos
+      : produtos.filter(p => p.categoria === state.categoria);
+
+    $("#products").innerHTML = filtered.map(p => `
+      <article class="product">
+        <div class="product-top"><h3>${p.nome}</h3><span class="price">${money(p.preco)}</span></div>
+        <p>${p.descricao}</p>
+        <button type="button" class="add" data-add="${p.id}">Adicionar</button>
+      </article>
+    `).join("");
+  }
+
+  function cartQuantity() {
+    return state.carrinho.reduce((sum,item) => sum + item.quantidade, 0);
+  }
+
+  function subtotal() {
+    return state.carrinho.reduce((sum,item) => sum + item.preco * item.quantidade, 0);
+  }
+
+  function renderCart() {
+    const cart = $("#cartItems");
+    const totalItems = cartQuantity();
+    $("#cartCount").textContent = totalItems;
+    $("#itemCount").textContent = `${totalItems} ${totalItems === 1 ? "item" : "itens"}`;
+
+    if (!state.carrinho.length) {
+      cart.innerHTML = `<div class="cart-empty">Seu carrinho está vazio. Escolha uma pizza para começar.</div>`;
+      $("#totals").innerHTML = "";
+      return;
+    }
+
+    cart.innerHTML = state.carrinho.map(item => `
+      <div class="cart-item">
+        <div class="cart-row"><span class="cart-name">${item.nome}</span><strong>${money(item.preco * item.quantidade)}</strong></div>
+        <div class="controls">
+          <button class="qty" type="button" data-minus="${item.id}" aria-label="Diminuir quantidade">−</button>
+          <span>${item.quantidade}</span>
+          <button class="qty" type="button" data-plus="${item.id}" aria-label="Aumentar quantidade">+</button>
+          <button class="remove" type="button" data-remove="${item.id}">Remover</button>
+        </div>
+      </div>
+    `).join("");
+
+    const sub = subtotal();
+    $("#totals").innerHTML = `
+      <div class="totals">
+        <div class="total-row"><span>Subtotal</span><span>${money(sub)}</span></div>
+        <div class="total-row"><span>Entrega</span><span>${money(pizzaria.taxaEntrega)}</span></div>
+        <div class="total-row final"><span>Total</span><span>${money(sub + pizzaria.taxaEntrega)}</span></div>
+        <button type="button" class="primary" id="checkoutButton">Finalizar pedido</button>
+      </div>`;
+  }
+
+  function renderAll() {
+    renderCategories();
+    renderProducts();
+    renderCart();
+    renderMessages();
+  }
+
+  function addToCart(id) {
+    const product = produtos.find(p => p.id === id);
+    if (!product) return;
+    const existing = state.carrinho.find(item => item.id === id);
+    if (existing) existing.quantidade++;
+    else state.carrinho.push({...product, quantidade:1});
+    save();
+    renderCart();
+    addMessage(`${product.nome} foi adicionado ao seu pedido.`);
+  }
+
+  function changeQuantity(id, delta) {
+    const item = state.carrinho.find(p => p.id === id);
+    if (!item) return;
+    item.quantidade += delta;
+    if (item.quantidade <= 0) state.carrinho = state.carrinho.filter(p => p.id !== id);
+    save();
+    renderCart();
+  }
+
+  function quickAction(action) {
+    const responses = {
+      cardapio: "Claro! O cardápio está disponível ao lado. Você pode filtrar por categoria e adicionar os itens ao pedido.",
+      pedido: "Vamos fazer seu pedido! Escolha uma pizza no cardápio ou me diga qual sabor você gostaria.",
+      promocoes: "Hoje temos atendimento normal e você pode conferir as opções do cardápio. As promoções podem ser cadastradas na lista de produtos.",
+      entrega: `A taxa de entrega demonstrativa é ${money(pizzaria.taxaEntrega)}. Ela é somada ao pedido e demora em torno de 40 minutos a 1 hora na finalização.`,
+      atendente: "Um atendente da pizzaria pode continuar o atendimento. Esta demonstração funciona somente no navegador."
+    };
+    addMessage(responses[action] || "Como posso ajudar?");
+  }
+
+  function openCheckout() {
+    if (!state.carrinho.length) {
+      addMessage("Seu carrinho está vazio. Adicione pelo menos um item antes de finalizar.", "store");
+      return;
+    }
+    $("#checkoutSummary").innerHTML = `Itens: <strong>${cartQuantity()}</strong><br>Total: <strong>${money(subtotal() + pizzaria.taxaEntrega)}</strong>`;
+    $("#checkoutModal").classList.add("open");
+    $("#customerName").focus();
+  }
+
+  function closeCheckout() {
+    $("#checkoutModal").classList.remove("open");
+  }
+
+  $("#categories").addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+    state.categoria = button.dataset.category;
+    renderCategories();
+    renderProducts();
+  });
+
+  $("#products").addEventListener("click", event => {
+    const button = event.target.closest("[data-add]");
+    if (button) addToCart(Number(button.dataset.add));
+  });
+
+  $("#cartItems").addEventListener("click", event => {
+    const plus = event.target.closest("[data-plus]");
+    const minus = event.target.closest("[data-minus]");
+    const remove = event.target.closest("[data-remove]");
+    if (plus) changeQuantity(Number(plus.dataset.plus), 1);
+    if (minus) changeQuantity(Number(minus.dataset.minus), -1);
+    if (remove) {
+      state.carrinho = state.carrinho.filter(item => item.id !== Number(remove.dataset.remove));
+      save(); renderCart();
+    }
+  });
+
+  $("#totals").addEventListener("click", event => {
+    if (event.target.id === "checkoutButton") openCheckout();
+  });
+
+  document.querySelector(".quick").addEventListener("click", event => {
+    const button = event.target.closest("[data-quick]");
+    if (button) quickAction(button.dataset.quick);
+  });
+
+  $("#chatForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const input = $("#messageInput");
+    const text = input.value.trim();
+    if (!text) return;
+    addMessage(text, "user");
+    input.value = "";
+    setTimeout(() => addMessage("Recebi sua mensagem! Posso ajudar com o cardápio, pedido, entrega ou atendimento."), 350);
+  });
+
+  $("#messageInput").addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      $("#chatForm").requestSubmit();
+    }
+  });
+
+  $("#cancelCheckout").addEventListener("click", closeCheckout);
+  $("#checkoutModal").addEventListener("click", event => {
+    if (event.target.id === "checkoutModal") closeCheckout();
+  });
+
+  $("#deliveryType").addEventListener("change", event => {
+    $("#addressField").style.display = event.target.value === "entrega" ? "block" : "none";
+    $("#address").required = event.target.value === "entrega";
+  });
+
+  $("#checkoutForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const name = $("#customerName").value.trim();
+    const type = $("#deliveryType").value;
+    const orderNumber = Math.floor(1000 + Math.random() * 9000);
+    const total = subtotal() + (type === "entrega" ? pizzaria.taxaEntrega : 0);
+    closeCheckout();
+    addMessage(`Pedido #${orderNumber} confirmado, ${name}! Total: ${money(total)}. ${type === "entrega" ? "Entrega solicitada." : "Retirada no balcão solicitada."}`);
+    state.carrinho = [];
+    save();
+    renderCart();
+  });
+
+  if (!state.mensagens.length) {
+    state.mensagens = [
+      {text:`Olá! Bem-vindo à ${pizzaria.nome}. 🍕`,type:"store",time:time()},
+      {text:"Posso ajudar você a escolher uma pizza ou montar seu pedido. Use as opções rápidas ou o cardápio.",type:"store",time:time()}
+    ];
+    save();
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
